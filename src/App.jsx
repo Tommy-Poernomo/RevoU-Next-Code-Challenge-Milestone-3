@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 
 // Issue 1: Inline API key (security issue)
-const API_KEY = 'sk-1234567890abcdef'
+// Perbaikannya: ==>
+// const API_KEY = 'sk-1234567890abcdef' <== dipindah ke file .env dan diakses melalui import.meta.env.VITE_API_KEY
+const CLIENT_API_KEY = import.meta.env.VITE_CLIENT_KEY || '';
 
 function App() {
   // Issue 2: State management bisa lebih baik
