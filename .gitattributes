@@ -1,0 +1,17 @@
+# Git attributes for assessment repository
+
+# Ensure consistent line endings
+* text=auto
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+
+# Mark evaluator-only files
+ANSWER_KEY.md export-ignore
+EVALUATOR_GUIDE.md export-ignore
+SCORING_RUBRIC.md export-ignore
+PROJECT_SUMMARY.md export-ignore
+SAMPLE_SOLUTION/ export-ignore
