@@ -5,55 +5,136 @@ import { useState, useEffect } from 'react'
 // const API_KEY = 'sk-1234567890abcdef' <== dipindah ke file .env dan diakses melalui import.meta.env.VITE_API_KEY
 const CLIENT_API_KEY = import.meta.env.VITE_CLIENT_KEY || '';
 
+// Issue
 function App() {
   // Issue 2: State management bisa lebih baik
-  const [todos, setTodos] = useState([])
-  const [input, setInput] = useState('')
-  const [filter, setFilter] = useState('all')
+  //const [todos, setTodos] = useState([])
+  //const [input, setInput] = useState('')
+  //const [filter, setFilter] = useState('all')
   
   // Issue 3: useEffect tanpa dependency array yang tepat
-  useEffect(() => {
-    // Load from localStorage
+  // useEffect(() => {
+  //   // Load from localStorage
+  //   const saved = localStorage.getItem('todos')
+  //   if (saved) {
+  //     setTodos(JSON.parse(saved))
+  //   }
+  // }, [])
+  
+  // // Issue 4: useEffect yang terlalu sering run
+  // useEffect(() => {
+  //   localStorage.setItem('todos', JSON.stringify(todos))
+  // })
+  
+  // Perbaikannya:
+  // Fix Issue 2 & 3: Lazy initial state membaca localStorage saat inisialisasi awal
+  // Menghilangkan useEffect load di sini dan hanya diletakkan di bagian issue 4 saja, mencegah render flicker dan race condition 
+  const [todos, setTodos] = useState(() => {
+  try {
     const saved = localStorage.getItem('todos')
-    if (saved) {
-      setTodos(JSON.parse(saved))
-    }
-  }, [])
-  
-  // Issue 4: useEffect yang terlalu sering run
-  useEffect(() => {
+    return saved ? JSON.parse(saved) : []
+  } catch (error) {
+    console.error('Failed to load todos from localStorage:', error)
+    return []
+  }
+})
+
+const [input, setInput] = useState('')
+const [filter, setFilter] = useState('all')
+
+// Fix Issue 4: Menambahkan dependency array [todos] dengan error handling
+// Hanya menyimpan data saat array todos benar-benar berubah, bukan di setiap ketikan/render
+useEffect(() => {
+  try {
     localStorage.setItem('todos', JSON.stringify(todos))
-  })
-  
-  // Issue 5: Function yang tidak di-memoize, re-create setiap render
-  const addTodo = () => {
-    if (input.trim() === '') {
-      alert('Please enter a todo')
-      return
-    }
+  } catch (error) {
+    console.error('Failed to save todos to localStorage:', error)
+  }
+}, [todos])
+
+  // // Issue 5: Function yang tidak di-memoize, re-create setiap render
+  // const addTodo = () => {
+  //   if (input.trim() === '') {
+  //     alert('Please enter a todo')
+  //     return
+  //   }
     
-    // Issue 6: Menggunakan Date.now() sebagai ID (bisa collision)
+  //   // Issue 6: Menggunakan Date.now() sebagai ID (bisa collision)
+  //   const newTodo = {
+  //     id: Date.now(),
+  //     text: input,
+  //     completed: false,
+  //     createdAt: new Date().toISOString()
+  //   }
+    
+  //   setTodos([...todos, newTodo])
+  //   setInput('')
+  // }
+  
+  // // Issue 7: Tidak ada error handling
+  // const deleteTodo = (id) => {
+  //   setTodos(todos.filter(todo => todo.id !== id))
+  // }
+  
+  // const toggleTodo = (id) => {
+  //   setTodos(todos.map(todo => 
+  //     todo.id === id ? { ...todo, completed: !todo.completed } : todo
+  //   ))
+  // }
+  // Perbaikannya:
+// Fix Issue 5 & 7: Memoize fungsi dengan useCallback dan gunakan functional update (prev => ...)
+const addTodo = useCallback(() => {
+  const trimmed = input.trim()
+  if (!trimmed) {
+    console.warn('Validation: Todo text cannot be empty')
+    return
+  }
+
+  try {
     const newTodo = {
-      id: Date.now(),
-      text: input,
+      // Catatan: Issue 6 (ID) sementara pakai begini, idealnya crypto.randomUUID()
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now(),
+      text: trimmed,
       completed: false,
       createdAt: new Date().toISOString()
     }
-    
-    setTodos([...todos, newTodo])
+
+    setTodos(prevTodos => [...prevTodos, newTodo])
     setInput('')
+  } catch (error) {
+    console.error('Failed to add todo:', error)
   }
-  
-  // Issue 7: Tidak ada error handling
-  const deleteTodo = (id) => {
-    setTodos(todos.filter(todo => todo.id !== id))
+}, [input]) // Hanya dibuat ulang jika nilai `input` berubah
+
+const deleteTodo = useCallback((id) => {
+  if (!id) {
+    console.warn('Validation: Invalid ID provided for deletion')
+    return
   }
-  
-  const toggleTodo = (id) => {
-    setTodos(todos.map(todo => 
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ))
+
+  try {
+    setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id))
+  } catch (error) {
+    console.error(`Failed to delete todo with id ${id}:`, error)
   }
+}, []) // Tanpa dependensi: stabil dan tidak pernah dibuat ulang
+
+const toggleTodo = useCallback((id) => {
+  if (!id) {
+    console.warn('Validation: Invalid ID provided for toggle')
+    return
+  }
+
+  try {
+    setTodos(prevTodos => 
+      prevTodos.map(todo => 
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    )
+  } catch (error) {
+    console.error(`Failed to toggle todo with id ${id}:`, error)
+  }
+}, []) // Tanpa dependensi: stabil dan tidak pernah dibuat ulang
   
   // Issue 8: Logic filtering yang bisa dipindah ke useMemo
   const getFilteredTodos = () => {
