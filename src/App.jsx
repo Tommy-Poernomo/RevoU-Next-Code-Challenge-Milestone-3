@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react' //ditambahkan useCallback untuk perbaikan issue 5, 7, dan juga nantinya 8
 
 // Issue 1: Inline API key (security issue)
 // Perbaikannya: ==>
@@ -52,35 +52,89 @@ useEffect(() => {
   }
 }, [todos])
 
-  // Issue 5: Function yang tidak di-memoize, re-create setiap render
-  const addTodo = () => {
-    if (input.trim() === '') {
-      alert('Please enter a todo')
-      return
-    }
+  // // Issue 5: Function yang tidak di-memoize, re-create setiap render
+  // const addTodo = () => {
+  //   if (input.trim() === '') {
+  //     alert('Please enter a todo')
+  //     return
+  //   }
     
-    // Issue 6: Menggunakan Date.now() sebagai ID (bisa collision)
+  //   // Issue 6: Menggunakan Date.now() sebagai ID (bisa collision)
+  //   const newTodo = {
+  //     id: Date.now(),
+  //     text: input,
+  //     completed: false,
+  //     createdAt: new Date().toISOString()
+  //   }
+    
+  //   setTodos([...todos, newTodo])
+  //   setInput('')
+  // }
+  
+  // // Issue 7: Tidak ada error handling
+  // const deleteTodo = (id) => {
+  //   setTodos(todos.filter(todo => todo.id !== id))
+  // }
+  
+  // const toggleTodo = (id) => {
+  //   setTodos(todos.map(todo => 
+  //     todo.id === id ? { ...todo, completed: !todo.completed } : todo
+  //   ))
+  // }
+  // Perbaikannya:
+// Fix Issue 5 & 7: Memoize fungsi dengan useCallback dan gunakan functional update (prev => ...)
+const addTodo = useCallback(() => {
+  const trimmed = input.trim()
+  if (!trimmed) {
+    console.warn('Validation: Todo text cannot be empty')
+    return
+  }
+
+  try {
     const newTodo = {
-      id: Date.now(),
-      text: input,
+      // Catatan: Issue 6 (ID) sementara pakai begini, idealnya crypto.randomUUID()
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now(),
+      text: trimmed,
       completed: false,
       createdAt: new Date().toISOString()
     }
-    
-    setTodos([...todos, newTodo])
+
+    setTodos(prevTodos => [...prevTodos, newTodo])
     setInput('')
+  } catch (error) {
+    console.error('Failed to add todo:', error)
   }
-  
-  // Issue 7: Tidak ada error handling
-  const deleteTodo = (id) => {
-    setTodos(todos.filter(todo => todo.id !== id))
+}, [input]) // Hanya dibuat ulang jika nilai `input` berubah
+
+const deleteTodo = useCallback((id) => {
+  if (!id) {
+    console.warn('Validation: Invalid ID provided for deletion')
+    return
   }
-  
-  const toggleTodo = (id) => {
-    setTodos(todos.map(todo => 
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ))
+
+  try {
+    setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id))
+  } catch (error) {
+    console.error(`Failed to delete todo with id ${id}:`, error)
   }
+}, []) // Tanpa dependensi: stabil dan tidak pernah dibuat ulang
+
+const toggleTodo = useCallback((id) => {
+  if (!id) {
+    console.warn('Validation: Invalid ID provided for toggle')
+    return
+  }
+
+  try {
+    setTodos(prevTodos => 
+      prevTodos.map(todo => 
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    )
+  } catch (error) {
+    console.error(`Failed to toggle todo with id ${id}:`, error)
+  }
+}, []) // Tanpa dependensi: stabil dan tidak pernah dibuat ulang
   
   // Issue 8: Logic filtering yang bisa dipindah ke useMemo
   const getFilteredTodos = () => {
