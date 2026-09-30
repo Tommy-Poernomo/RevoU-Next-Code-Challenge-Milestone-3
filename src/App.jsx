@@ -5,7 +5,15 @@ import { useState, useEffect, useCallback } from 'react' //ditambahkan useCallba
 // const API_KEY = 'sk-1234567890abcdef' <== dipindah ke file .env dan diakses melalui import.meta.env.VITE_API_KEY
 const CLIENT_API_KEY = import.meta.env.VITE_CLIENT_KEY || '';
 
-// Issue
+// Fix Issue 6: Utility untuk generate ID unik (mencegah ID collision)
+// Diletakkan di luar komponen agar tidak dibuat ulang di setiap siklus render
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+}
+
 function App() {
   // Issue 2: State management bisa lebih baik
   //const [todos, setTodos] = useState([])
@@ -92,8 +100,8 @@ const addTodo = useCallback(() => {
 
   try {
     const newTodo = {
-      // Catatan: Issue 6 (ID) sementara pakai begini, idealnya crypto.randomUUID()
-      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now(),
+      /// Fix Issue 6: Menggunakan generator UUID yang aman dari tabrakan ID/ID Collisions
+      id: generateId(),
       text: trimmed,
       completed: false,
       createdAt: new Date().toISOString()
