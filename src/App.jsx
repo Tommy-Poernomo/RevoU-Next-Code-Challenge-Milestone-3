@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react' //ditambahkan useCallback untuk perbaikan issue 5, 7, dan juga nantinya 8
+import { useState, useEffect, useCallback, useMemo } from 'react' //ditambahkan useCallback untuk perbaikan issue 5, 7, dan juga nantinya 8, ditambah useMemo untuk perbaikan issue 8 dan 9
 
 // Issue 1: Inline API key (security issue)
 // Perbaikannya: ==>
@@ -144,23 +144,46 @@ const toggleTodo = useCallback((id) => {
   }
 }, []) // Tanpa dependensi: stabil dan tidak pernah dibuat ulang
   
-  // Issue 8: Logic filtering yang bisa dipindah ke useMemo
-  const getFilteredTodos = () => {
-    if (filter === 'active') {
-      return todos.filter(todo => !todo.completed)
-    }
-    if (filter === 'completed') {
-      return todos.filter(todo => todo.completed)
-    }
-    return todos
-  }
+  // // Issue 8: Logic filtering yang bisa dipindah ke useMemo
+  // const getFilteredTodos = () => {
+  //   if (filter === 'active') {
+  //     return todos.filter(todo => !todo.completed)
+  //   }
+  //   if (filter === 'completed') {
+  //     return todos.filter(todo => todo.completed)
+  //   }
+  //   return todos
+  // }
   
-  // Issue 9: Calculation yang tidak perlu di setiap render
-  const stats = {
-    total: todos.length,
-    completed: todos.filter(t => t.completed).length,
-    active: todos.filter(t => !t.completed).length
-  }
+  // // Issue 9: Calculation yang tidak perlu di setiap render
+  // const stats = {
+  //   total: todos.length,
+  //   completed: todos.filter(t => t.completed).length,
+  //   active: todos.filter(t => !t.completed).length
+  // }
+
+  // Fix Issue 8: Memoize hasil filter todo dengan useMemo
+  // Hanya menghitung ulang jika array `todos` berubah atau opsi `filter` berganti
+  const filteredTodos = useMemo(() => {
+    switch (filter) {
+      case 'active':
+        return todos.filter(todo => !todo.completed)
+      case 'completed':
+        return todos.filter(todo => todo.completed)
+      default:
+        return todos
+    }
+  }, [todos, filter])
+
+  // Fix Issue 9: Memoize kalkulasi statistik dengan useMemo
+  // Menghindari 2x looping filter di setiap render saat user mengetik input
+  const stats = useMemo(() => {
+    const total = todos.length
+    const completed = todos.filter(t => t.completed).length
+    const active = total - completed // Optimasi: O(1) kalkulasi tanpa filter kedua
+
+    return { total, active, completed }
+  }, [todos])
   
   // Issue 10: Inline event handler dengan arrow function (re-create setiap render)
   return (
@@ -207,7 +230,8 @@ const toggleTodo = useCallback((id) => {
       
       <div className="todo-list">
         {/* Issue 13: Tidak ada handling untuk empty state */}
-        {getFilteredTodos().map((todo) => (
+        {/* {getFilteredTodos().map((todo) => ( diganti dengan ini ==> */}
+        {filteredTodos.map(todo => (
           // Issue 14: Key menggunakan index bisa lebih baik dengan ID
           <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''}`}>
             <input 
