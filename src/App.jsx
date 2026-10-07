@@ -184,6 +184,12 @@ const toggleTodo = useCallback((id) => {
 
     return { total, active, completed }
   }, [todos])
+
+  // Fix Issue 10 & 11: Form submit handler terpadu dengan preventDefault
+  const handleSubmit = useCallback((e) => {
+    e.preventDefault()
+    addTodo()
+  }, [addTodo])
   
   // Issue 10: Inline event handler dengan arrow function (re-create setiap render)
   return (
@@ -191,7 +197,7 @@ const toggleTodo = useCallback((id) => {
       <h1>My Todo List</h1>
       
       {/* Issue 11: Tidak ada label untuk accessibility */}
-      <div className="input-section">
+      {/* <div className="input-section">
         <input 
           type="text"
           value={input}
@@ -204,7 +210,24 @@ const toggleTodo = useCallback((id) => {
           placeholder="What needs to be done?"
         />
         <button onClick={addTodo}>Add</button>
-      </div>
+      </div> */}
+
+{/* Fix Issue 10 & 11: Gunakan form semantik, hapus onKeyPress usang, dan lengkapi atribut a11y */}
+      <form onSubmit={handleSubmit} className="input-group">
+        <label htmlFor="todo-input" className="sr-only">
+          What needs to be done?
+        </label>
+        <input
+          id="todo-input"
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="What needs to be done?"
+          aria-label="What needs to be done?"
+        />
+        <button type="submit">Add</button>
+      </form>
+
       
       {/* Issue 12: Inline styles (inconsistent dengan CSS file) */}
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
