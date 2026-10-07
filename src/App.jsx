@@ -320,6 +320,7 @@ const toggleTodo = useCallback((id) => {
                 onChange={() => toggleTodo(todo.id)}
                 aria-label={`Mark "${todo.text}" as ${todo.completed ? 'incomplete' : 'complete'}`}
               />
+              {/* Fix Issue 15: Render text biasa agar terlindung oleh auto-escaping React */}
               <span>{todo.text}</span>
               <button 
                 type="button"
@@ -338,9 +339,11 @@ const toggleTodo = useCallback((id) => {
         <p>Total: {stats.total} | Active: {stats.active} | Completed: {stats.completed}</p>
       </div>
       
-      {/* Issue 16: Debug code yang tertinggal */}
+      {/* Issue 16: Debug code yang tertinggal
       {console.log('Rendering with todos:', todos)}
-      {console.log('API Key:', API_KEY)}
+      {console.log('API Key:', API_KEY)} */}
+
+      {/* Fix Issue 16: Hapus console.log debug dan container footer-debug untuk mencegah kebocoran data */}
     </div>
   )
 }
