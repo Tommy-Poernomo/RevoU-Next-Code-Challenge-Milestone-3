@@ -276,10 +276,10 @@ const toggleTodo = useCallback((id) => {
         </button>
       </div>
       
-      <div className="todo-list">
+      {/* <div className="todo-list">
         {/* Issue 13: Tidak ada handling untuk empty state */}
         {/* {getFilteredTodos().map((todo) => ( diganti dengan ini ==> */}
-        {filteredTodos.map(todo => (
+        {/* {filteredTodos.map(todo => (
           // Issue 14: Key menggunakan index bisa lebih baik dengan ID
           <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''}`}>
             <input 
@@ -288,7 +288,7 @@ const toggleTodo = useCallback((id) => {
               onChange={() => toggleTodo(todo.id)}
             />
             {/* Issue 15: Potential XSS jika text dari user input */}
-            <span dangerouslySetInnerHTML={{ __html: todo.text }} />
+            {/* <span dangerouslySetInnerHTML={{ __html: todo.text }} />
             <button 
               className="delete-btn"
               onClick={() => deleteTodo(todo.id)}
@@ -297,6 +297,41 @@ const toggleTodo = useCallback((id) => {
             </button>
           </div>
         ))}
+      </div> */}
+
+      {/* Fix Issue 13 & 14: Tampilkan empty state ramah pengguna dan gunakan key stabil berbasis todo.id */}
+      <div className="todo-list">
+        {filteredTodos.length === 0 ? (
+          <div className="empty-state">
+            <p>
+              {filter === 'completed'
+                ? 'No completed tasks yet.'
+                : filter === 'active'
+                ? 'No active tasks! You are all caught up.'
+                : 'Your todo list is empty. Add a task above!'}
+            </p>
+          </div>
+        ) : (
+          filteredTodos.map((todo) => (
+            <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''}`}>
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={() => toggleTodo(todo.id)}
+                aria-label={`Mark "${todo.text}" as ${todo.completed ? 'incomplete' : 'complete'}`}
+              />
+              <span>{todo.text}</span>
+              <button 
+                type="button"
+                className="delete-btn" 
+                onClick={() => deleteTodo(todo.id)}
+                aria-label={`Delete todo "${todo.text}"`}
+              >
+                Delete
+              </button>
+            </div>
+          ))
+        )}
       </div>
       
       <div className="stats">
