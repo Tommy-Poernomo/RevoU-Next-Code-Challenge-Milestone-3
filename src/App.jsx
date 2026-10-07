@@ -229,7 +229,7 @@ const toggleTodo = useCallback((id) => {
       </form>
 
       
-      {/* Issue 12: Inline styles (inconsistent dengan CSS file) */}
+      {/* Issue 12: Inline styles (inconsistent dengan CSS file)
       <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
         <button 
           onClick={() => setFilter('all')}
@@ -248,6 +248,31 @@ const toggleTodo = useCallback((id) => {
           style={{ background: filter === 'completed' ? '#28a745' : '#007bff' }}
         >
           Completed
+        </button>
+      </div> */}
+
+      {/* Fix Issue 12: Ganti inline styles dengan CSS class dinamis */}
+      <div className="filter-group">
+        <button 
+          type="button"
+          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+          onClick={() => setFilter('all')}
+        >
+          All ({stats.total})
+        </button>
+        <button 
+          type="button"
+          className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
+          onClick={() => setFilter('active')}
+        >
+          Active ({stats.active})
+        </button>
+        <button 
+          type="button"
+          className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
+          onClick={() => setFilter('completed')}
+        >
+          Completed ({stats.completed})
         </button>
       </div>
       

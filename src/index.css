@@ -104,3 +104,33 @@ button:hover {
   color: #666;
   font-size: 14px;
 }
+
+/* Styling layout grup tombol filter */
+.filter-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+/* Base style tombol filter (keadaan tidak aktif: abu-abu) */
+.filter-btn {
+  background: #ccc;
+  color: #333;
+  padding: 6px 14px;
+  font-size: 13px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.filter-btn:hover {
+  background: #bbb;
+}
+
+/* Keadaan aktif (sesuai tombol filter terpilih) */
+.filter-btn.active {
+  background: #007bff;
+  color: #fff;
+}
+
+.filter-btn.active:hover {
+  background: #0056b3;
+}
